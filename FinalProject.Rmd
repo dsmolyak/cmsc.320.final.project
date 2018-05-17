@@ -1,0 +1,40 @@
+---
+title: "Final Project: Analyzing U.S. Election County Data"
+author: "Daniel Smolyak"
+date: "5/16/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+With the recent U.S. presidential election behind us and and a midterm election in the near future, it is easy to focus on the anecdotal headlines and stories on individual voters, individual districts, or even individual states. However, a thorough data analysis of the characteristics of each and every county and how they voted in each election can provide us with a clearer and more accurate idea of just what drives the general trends in political leanings, regardless of these specific anecdotes.
+
+Simultaneously, this will be a tutorial in data analysis using R. We will first examine how to collect raw data on these county characteristics and votes. Then, we will go through the processing of this data in order to prepare it for analysis. Then, we will visualize the data in order to conduct exploratory analysis. From there, we will focus in and analyze patterns we've discovered in the visualization. And from these patterns, we will draw conclusions on general trends within the U.S. electorate. And using these general trends, we hope to draw insights on why certain areas of the country lean more Democratic or Republican, in order to better understand the overall results of past and upcoming elections.
+
+![](./politics.jpg)
+
+# Data Collection
+
+The data used for this project can be found online at this [kaggle repository](https://www.kaggle.com/joelwilson/identity-politics-in-the-2016-election/data). At this repository, we find two csv files, one on each U.S. county's [demographic characteristics](https://www.kaggle.com/joelwilson/2012-2016-presidential-elections/downloads/county_facts.csv/2) and another on its [voting behavior](https://www.kaggle.com/joelwilson/2012-2016-presidential-elections/downloads/US_County_Level_Presidential_Results_12-16.csv/2).
+
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+path <- "./county_facts.csv"
+county_data <- read_csv(path)
+county_data
+```
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+path <- "./US_County_Level_Presidential_Results_12-16.csv"
+election_data <- read_csv(path)
+election_data
+```
+
+
+
