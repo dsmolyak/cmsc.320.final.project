@@ -99,7 +99,7 @@ total_df
 
 # Vizualization
 
-Now that we are data is all together in one data frame, we may begin analyzing some basic trends and patterns in the data. For instance, we can plot in a histagram the number of counties in various ranges of political leanings. We will do this by using the "per_point_diff_2016" statistic, which is the percentage differential between Democratic and Republican votes in 2016. (subtracts the Republican percentage from the Democratic percentage). Thus, counties leaning Republican will be negative while those leaning Democratic will be positive. Additionally, we include a line to indicate where the median leaning is of a county in 2016.
+Now that we are data is all together in one data frame, we may begin analyzing some basic trends and patterns in the data. For instance, we can plot in a histogram the number of counties in various ranges of political leanings. We will do this by using the "per_point_diff_2016" statistic, which is the percentage differential between Democratic and Republican votes in 2016. (subtracts the Republican percentage from the Democratic percentage). Thus, counties leaning Republican will be negative while those leaning Democratic will be positive. Additionally, we include a line to indicate where the median leaning is of a county in 2016.
 
 We do this using the ggplot package, which allows to specify what type of plot we'd like (histogram), what we'd like as the x-variable (per_point_diff_2016) and the other vertical that are plotted below, using geom_vline.
 
@@ -141,6 +141,42 @@ weight_df %>%
       geom_vline(aes(xintercept=log(mean(weighted_lean))), color="blue") +
       geom_vline(aes(xintercept= (log(abs(median(weighted_lean)))) * -1), color="red")
 ```
+
+# Hypothesis Testing
+
+Next, since we have our unified data set, let's test out what effects certain county characteristics have on political leaning. For instance, it's often been said in the news that Donald Trump has pulled more educated voters to the left. Thus, in formal terms, we will hypothesize that an increase in the percentage of residents having a bachelor's degree will lead to an increase in the percent differential in Democratic vs. Republican votes.
+
+Let's start by plotting these two variables against one another:
+
+```{r message=FALSE, warning=FALSE}
+total_df %>%
+  ggplot(aes(x = EDU685213, y = per_point_diff_2016)) +
+      geom_point()
+```
+
+From this visualization it is clear that a trend might exist, but attempt to formalize that trend. We will specifically attempt to disprove the null-hypothesis, which would be the lack of trend between these two variables. The way we will do this is by plotting a regression line: if the line goes diagonally to the upper right, there may be a trend. So let's see:
+
+```{r message=FALSE, warning=FALSE}
+total_df %>%
+  ggplot(aes(x = EDU685213, y = per_point_diff_2016)) +
+      geom_point() +
+      geom_smooth(method = lm)
+```
+
+Awesome! We clearly see this regression line indicates an increase in education leads to an increase in Democratic leaning. Now let's try and figure out exactly what this regression line means. Thus, we will create a linear model as shown below, determining the differential as a function of education level.
+
+```{r message=FALSE, warning=FALSE}
+education_model <- lm(total_df$per_point_diff_2016 ~ total_df$EDU685213)
+broom::tidy(education_model)
+```
+
+This model now gives us information on two fronts. Firstly, the estimate for "total_df$EDU685213" gives us an understanding of what exactly the relation is between education and differential. Because the model states an estimate of approximately 0.016, we can interpret this to mean that for every 1% increase in education level in any given county, we can expect a 0.016 (1.6%) increase in the differential between Democratic and Republican votes. Additionally, the intercept tells us that for a county with 0% of its residents with bachelor's degrees, the expected differential in that county would be approximately -0.635, or a strong Republican leaning.
+
+Moreover, if we look at the p-value for both the intercept and the relationship, they are both nearly 0. Thus, as the p-value is certainly below the standard threshold of 0.05, with strong confidence, we can reject our null-hypothesis of no trend between education and political leaning.
+
+The insight: while this regression provides no indication whatsoever of how well-informed policies on either side of the aisle are, it certainly appears that Republicans do a better job of appealing to voters of lower education levels and Democrats to voters of higher education levels. To read more on this trend you can visit this [Pew Research article](http://www.pewresearch.org/fact-tank/2016/09/15/educational-divide-in-vote-preferences-on-track-to-be-wider-than-in-recent-elections/).
+
+
 
 
 
