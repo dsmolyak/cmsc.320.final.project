@@ -41,11 +41,12 @@ county_data
 ```
 
 ```{r message=FALSE, warning=FALSE}
-library(tidyverse)
 path <- "./US_County_Level_Presidential_Results_12-16.csv"
 election_data <- read_csv(path)
 election_data
 ```
+
+# Basic Data Manipulation
 
 Now, we may explore these specific data frames in a variety of ways to get a general sense of what is contained within them. For example we might ask how many rows (counties) there are:
 
@@ -86,6 +87,8 @@ We can even use the FIPS (Federal Information Processing Standard) code to find 
 filter(county_data, fips >= 24000 & fips < 25000)
 ```
 
+# Data Linkage
+
 Now, to make this data useable for comparison of county demographics to county voting trends, we need to combine these two data frames. We will be doing this two-table operations, specifically by "joining" the demographics table and the voting table on their matching value for FIPS. Such operations are also frequently done in SQL, where information is separated in a database into tables. You can read more about these two table operations [here](https://www.w3schools.com/sql/sql_join.asp), but we will show our specific use-case below.
 
 ```{r message=FALSE, warning=FALSE}
@@ -94,8 +97,50 @@ total_df <- county_data %>%
 total_df
 ```
 
+# Vizualization
 
+Now that we are data is all together in one data frame, we may begin analyzing some basic trends and patterns in the data. For instance, we can plot in a histagram the number of counties in various ranges of political leanings. We will do this by using the "per_point_diff_2016" statistic, which is the percentage differential between Democratic and Republican votes in 2016. (subtracts the Republican percentage from the Democratic percentage). Thus, counties leaning Republican will be negative while those leaning Democratic will be positive. Additionally, we include a line to indicate where the median leaning is of a county in 2016.
 
+We do this using the ggplot package, which allows to specify what type of plot we'd like (histogram), what we'd like as the x-variable (per_point_diff_2016) and the other vertical that are plotted below, using geom_vline.
+
+```{r message=FALSE, warning=FALSE}
+total_df %>%
+  ggplot(aes(x=per_point_diff_2016)) +
+      geom_histogram(bins=100) +
+      geom_vline(aes(xintercept=median(per_point_diff_2016)), color="red") +
+      geom_vline(aes(xintercept=mean(per_point_diff_2016)), color="blue")
+```
+
+From the visualization above, it might seem like the typical voter in the U.S. leans heavily Republican, but all this visualization literally says is that the typical county leans Republican. And upon further examination, we would likely see that weighting counties by population would likely return the mean (as opposed to the median) to much closer to 0, as the highest population counties occur least often and are most often heavily Democratic. 
+
+Thus, below we calculate this "weighted lean" by simply finding the difference between the number of Democratic and Republican votes. And below we can see that the mean, which appropriately weights by population produces a slightly Democratic lean, as the popular vote in 2016 did lean Democratic, while the median, which goes purely by number of counties, leans much more heavily Republican.
+
+```{r message=FALSE, warning=FALSE}
+weight_df <- total_df %>% mutate(weighted_lean = votes_dem_2016 - votes_gop_2016)
+summarize(weight_df, mean_lean = mean(weighted_lean), median_lean = median(weighted_lean))
+```
+
+Furthermore, we can plot these weights on a new histogram, as shown below.
+
+```{r message=FALSE, warning=FALSE}
+weight_df %>%
+  ggplot(aes(x=weighted_lean)) +
+      geom_histogram(bins=100) +
+      geom_vline(aes(xintercept=mean(weighted_lean)), color="blue") +
+      geom_vline(aes(xintercept=median(weighted_lean)), color="red")
+```
+
+However, it is immediately visible that these weights are too far spread out to get a good feel for the data, so we now instead transform the data, using the log function. Specifically we take the log of positive values, and for negative values, we take their absolute value, then take their log, and then multiply by -1. 
+This allows us a cleaner view of the data: we can now see the substantial difference between the mean and median. Additionally, we can see the trend suspected before, that while there are fewer Democratic leaning counties, they tend to be the most populous counties.
+
+```{r message=FALSE, warning=FALSE}
+weight_df %>%
+  mutate(log_weight = ifelse(weighted_lean > 0, log(weighted_lean), log(abs(weighted_lean)) * -1)) %>%
+  ggplot(aes(x=log_weight)) +
+      geom_histogram(bins=100) +
+      geom_vline(aes(xintercept=log(mean(weighted_lean))), color="blue") +
+      geom_vline(aes(xintercept= (log(abs(median(weighted_lean)))) * -1), color="red")
+```
 
 
 
