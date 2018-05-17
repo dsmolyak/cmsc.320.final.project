@@ -134,11 +134,18 @@ $(document).ready(function () {
 
 </div>
 </div>
+<div id="setup" class="section level1">
+<h1>Setup</h1>
+<p>Before we start, you’ll want to make sure you have the proper packages installed and imported as shown below. Some common packages in R include tidyverse, dplyr, and stringr, among others.</p>
+<pre class="r"><code>library(tidyverse)
+library(dplyr)
+library(stringr)</code></pre>
+</div>
 <div id="data-collection" class="section level1">
 <h1>Data Collection</h1>
 <p>The data used for this project can be found online at this <a href="https://www.kaggle.com/joelwilson/identity-politics-in-the-2016-election/data">kaggle repository</a>. At this repository, we find two csv files, one on each U.S. county’s <a href="https://www.kaggle.com/joelwilson/2012-2016-presidential-elections/downloads/county_facts.csv/2">demographic characteristics</a> and another on its <a href="https://www.kaggle.com/joelwilson/2012-2016-presidential-elections/downloads/US_County_Level_Presidential_Results_12-16.csv/2">voting behavior</a>.</p>
-<pre class="r"><code>library(tidyverse)
-path &lt;- &quot;./county_facts.csv&quot;
+<p>So the first step in collecting this data is of course to download the datasets, by clicking on the link above. Then, after placing these csv files in the same folder as your analysis, we can execute the code below, which converts csv files into useable data in R, in the form of a data frame.</p>
+<pre class="r"><code>path &lt;- &quot;./county_facts.csv&quot;
 county_data &lt;- read_csv(path)
 county_data</code></pre>
 <pre><code>## # A tibble: 3,195 x 54
@@ -190,6 +197,147 @@ election_data</code></pre>
 ## #   total_votes_2012 &lt;dbl&gt;, votes_dem_2012 &lt;dbl&gt;, votes_gop_2012 &lt;dbl&gt;,
 ## #   county_fips &lt;chr&gt;, state_fips &lt;chr&gt;, per_dem_2012 &lt;dbl&gt;,
 ## #   per_gop_2012 &lt;dbl&gt;, diff_2012 &lt;dbl&gt;, per_point_diff_2012 &lt;dbl&gt;</code></pre>
+<p>Now, we may explore these specific data frames in a variety of ways to get a general sense of what is contained within them. For example we might ask how many rows (counties) there are:</p>
+<pre class="r"><code>nrow(county_data)</code></pre>
+<pre><code>## [1] 3195</code></pre>
+<p>Or we might ask what are and how many columns (attributes) do we have:</p>
+<pre class="r"><code>colnames(county_data)</code></pre>
+<pre><code>##  [1] &quot;fips&quot;               &quot;area_name&quot;          &quot;state_abbreviation&quot;
+##  [4] &quot;PST045214&quot;          &quot;PST040210&quot;          &quot;PST120214&quot;         
+##  [7] &quot;POP010210&quot;          &quot;AGE135214&quot;          &quot;AGE295214&quot;         
+## [10] &quot;AGE775214&quot;          &quot;SEX255214&quot;          &quot;RHI125214&quot;         
+## [13] &quot;RHI225214&quot;          &quot;RHI325214&quot;          &quot;RHI425214&quot;         
+## [16] &quot;RHI525214&quot;          &quot;RHI625214&quot;          &quot;RHI725214&quot;         
+## [19] &quot;RHI825214&quot;          &quot;POP715213&quot;          &quot;POP645213&quot;         
+## [22] &quot;POP815213&quot;          &quot;EDU635213&quot;          &quot;EDU685213&quot;         
+## [25] &quot;VET605213&quot;          &quot;LFE305213&quot;          &quot;HSG010214&quot;         
+## [28] &quot;HSG445213&quot;          &quot;HSG096213&quot;          &quot;HSG495213&quot;         
+## [31] &quot;HSD410213&quot;          &quot;HSD310213&quot;          &quot;INC910213&quot;         
+## [34] &quot;INC110213&quot;          &quot;PVY020213&quot;          &quot;BZA010213&quot;         
+## [37] &quot;BZA110213&quot;          &quot;BZA115213&quot;          &quot;NES010213&quot;         
+## [40] &quot;SBO001207&quot;          &quot;SBO315207&quot;          &quot;SBO115207&quot;         
+## [43] &quot;SBO215207&quot;          &quot;SBO515207&quot;          &quot;SBO415207&quot;         
+## [46] &quot;SBO015207&quot;          &quot;MAN450207&quot;          &quot;WTN220207&quot;         
+## [49] &quot;RTN130207&quot;          &quot;RTN131207&quot;          &quot;AFN120207&quot;         
+## [52] &quot;BPS030214&quot;          &quot;LND110210&quot;          &quot;POP060210&quot;</code></pre>
+<p>And as the above column names may seem pretty archaic, we have thankfully also been provided with a dictionary that maps these names to their meanings.</p>
+<pre class="r"><code>path &lt;- &quot;./county_facts_dictionary.csv&quot;
+county_dict &lt;- read_csv(path)
+county_dict</code></pre>
+<pre><code>## # A tibble: 51 x 2
+##    column_name description                                               
+##    &lt;chr&gt;       &lt;chr&gt;                                                     
+##  1 PST045214   Population, 2014 estimate                                 
+##  2 PST040210   Population, 2010 (April 1) estimates base                 
+##  3 PST120214   Population, percent change - April 1, 2010 to July 1, 2014
+##  4 POP010210   Population, 2010                                          
+##  5 AGE135214   Persons under 5 years, percent, 2014                      
+##  6 AGE295214   Persons under 18 years, percent, 2014                     
+##  7 AGE775214   Persons 65 years and over, percent, 2014                  
+##  8 SEX255214   Female persons, percent, 2014                             
+##  9 RHI125214   White alone, percent, 2014                                
+## 10 RHI225214   Black or African American alone, percent, 2014            
+## # ... with 41 more rows</code></pre>
+<p>Now that we have a general understanding of what lies within our data frame, let’s also introduce some methods for searching for specifics within the data. For example, we can choose to look at only certain attributes, using the “select” command.</p>
+<pre class="r"><code>select(county_data, area_name, PST045214, SEX255214)</code></pre>
+<pre><code>## # A tibble: 3,195 x 3
+##    area_name      PST045214 SEX255214
+##    &lt;chr&gt;              &lt;int&gt;     &lt;dbl&gt;
+##  1 United States  318857056      50.8
+##  2 Alabama          4849377      51.5
+##  3 Autauga County     55395      51.4
+##  4 Baldwin County    200111      51.2
+##  5 Barbour County     26887      46.6
+##  6 Bibb County        22506      45.9
+##  7 Blount County      57719      50.5
+##  8 Bullock County     10764      45.3
+##  9 Butler County      20296      53.6
+## 10 Calhoun County    115916      51.8
+## # ... with 3,185 more rows</code></pre>
+<p>Or we can choose to look at certain rows (entities) that fit a specific description or condition. For instance, the code below returns us the row with our very own Prince George’s County.</p>
+<pre class="r"><code>filter(county_data, area_name == &quot;Prince George's County&quot;)</code></pre>
+<pre><code>## # A tibble: 1 x 54
+##    fips area_name state_abbreviat… PST045214 PST040210 PST120214 POP010210
+##   &lt;int&gt; &lt;chr&gt;     &lt;chr&gt;                &lt;int&gt;     &lt;int&gt;     &lt;dbl&gt;     &lt;int&gt;
+## 1 24033 Prince G… MD                  904430    863519      4.70    863420
+## # ... with 47 more variables: AGE135214 &lt;dbl&gt;, AGE295214 &lt;dbl&gt;,
+## #   AGE775214 &lt;dbl&gt;, SEX255214 &lt;dbl&gt;, RHI125214 &lt;dbl&gt;, RHI225214 &lt;dbl&gt;,
+## #   RHI325214 &lt;dbl&gt;, RHI425214 &lt;dbl&gt;, RHI525214 &lt;dbl&gt;, RHI625214 &lt;dbl&gt;,
+## #   RHI725214 &lt;dbl&gt;, RHI825214 &lt;dbl&gt;, POP715213 &lt;dbl&gt;, POP645213 &lt;dbl&gt;,
+## #   POP815213 &lt;dbl&gt;, EDU635213 &lt;dbl&gt;, EDU685213 &lt;dbl&gt;, VET605213 &lt;int&gt;,
+## #   LFE305213 &lt;dbl&gt;, HSG010214 &lt;int&gt;, HSG445213 &lt;dbl&gt;, HSG096213 &lt;dbl&gt;,
+## #   HSG495213 &lt;int&gt;, HSD410213 &lt;int&gt;, HSD310213 &lt;dbl&gt;, INC910213 &lt;int&gt;,
+## #   INC110213 &lt;int&gt;, PVY020213 &lt;dbl&gt;, BZA010213 &lt;int&gt;, BZA110213 &lt;int&gt;,
+## #   BZA115213 &lt;dbl&gt;, NES010213 &lt;int&gt;, SBO001207 &lt;int&gt;, SBO315207 &lt;dbl&gt;,
+## #   SBO115207 &lt;dbl&gt;, SBO215207 &lt;dbl&gt;, SBO515207 &lt;dbl&gt;, SBO415207 &lt;dbl&gt;,
+## #   SBO015207 &lt;dbl&gt;, MAN450207 &lt;dbl&gt;, WTN220207 &lt;dbl&gt;, RTN130207 &lt;dbl&gt;,
+## #   RTN131207 &lt;int&gt;, AFN120207 &lt;int&gt;, BPS030214 &lt;int&gt;, LND110210 &lt;dbl&gt;,
+## #   POP060210 &lt;dbl&gt;</code></pre>
+<p>We can even use the FIPS (Federal Information Processing Standard) code to find all of the counties recorded that are in Maryland, as we know that those every 1000 fips are for one state, and the result above indicates the Maryland FIPS are between 24000 and 25000.</p>
+<pre class="r"><code>filter(county_data, fips &gt;= 24000 &amp; fips &lt; 25000)</code></pre>
+<pre><code>## # A tibble: 25 x 54
+##     fips area_name         state_abbreviati… PST045214 PST040210 PST120214
+##    &lt;int&gt; &lt;chr&gt;             &lt;chr&gt;                 &lt;int&gt;     &lt;int&gt;     &lt;dbl&gt;
+##  1 24000 Maryland          &lt;NA&gt;                5976407   5773785     3.50 
+##  2 24001 Allegany County   MD                    72952     75087    -2.80 
+##  3 24003 Anne Arundel Cou… MD                   560133    537656     4.20 
+##  4 24005 Baltimore County  MD                   826925    804973     2.70 
+##  5 24009 Calvert County    MD                    90613     88737     2.10 
+##  6 24011 Caroline County   MD                    32538     33066    -1.60 
+##  7 24013 Carroll County    MD                   167830    167138     0.400
+##  8 24015 Cecil County      MD                   102383    101108     1.30 
+##  9 24017 Charles County    MD                   154747    146551     5.60 
+## 10 24019 Dorchester County MD                    32578     32618    -0.100
+## # ... with 15 more rows, and 48 more variables: POP010210 &lt;int&gt;,
+## #   AGE135214 &lt;dbl&gt;, AGE295214 &lt;dbl&gt;, AGE775214 &lt;dbl&gt;, SEX255214 &lt;dbl&gt;,
+## #   RHI125214 &lt;dbl&gt;, RHI225214 &lt;dbl&gt;, RHI325214 &lt;dbl&gt;, RHI425214 &lt;dbl&gt;,
+## #   RHI525214 &lt;dbl&gt;, RHI625214 &lt;dbl&gt;, RHI725214 &lt;dbl&gt;, RHI825214 &lt;dbl&gt;,
+## #   POP715213 &lt;dbl&gt;, POP645213 &lt;dbl&gt;, POP815213 &lt;dbl&gt;, EDU635213 &lt;dbl&gt;,
+## #   EDU685213 &lt;dbl&gt;, VET605213 &lt;int&gt;, LFE305213 &lt;dbl&gt;, HSG010214 &lt;int&gt;,
+## #   HSG445213 &lt;dbl&gt;, HSG096213 &lt;dbl&gt;, HSG495213 &lt;int&gt;, HSD410213 &lt;int&gt;,
+## #   HSD310213 &lt;dbl&gt;, INC910213 &lt;int&gt;, INC110213 &lt;int&gt;, PVY020213 &lt;dbl&gt;,
+## #   BZA010213 &lt;int&gt;, BZA110213 &lt;int&gt;, BZA115213 &lt;dbl&gt;, NES010213 &lt;int&gt;,
+## #   SBO001207 &lt;int&gt;, SBO315207 &lt;dbl&gt;, SBO115207 &lt;dbl&gt;, SBO215207 &lt;dbl&gt;,
+## #   SBO515207 &lt;dbl&gt;, SBO415207 &lt;dbl&gt;, SBO015207 &lt;dbl&gt;, MAN450207 &lt;dbl&gt;,
+## #   WTN220207 &lt;dbl&gt;, RTN130207 &lt;dbl&gt;, RTN131207 &lt;int&gt;, AFN120207 &lt;int&gt;,
+## #   BPS030214 &lt;int&gt;, LND110210 &lt;dbl&gt;, POP060210 &lt;dbl&gt;</code></pre>
+<p>Now, to make this data useable for comparison of county demographics to county voting trends, we need to combine these two data frames. We will be doing this two-table operations, specifically by “joining” the demographics table and the voting table on their matching value for FIPS. Such operations are also frequently done in SQL, where information is separated in a database into tables. You can read more about these two table operations <a href="https://www.w3schools.com/sql/sql_join.asp">here</a>, but we will show our specific use-case below.</p>
+<pre class="r"><code>total_df &lt;- county_data %&gt;%
+  inner_join(election_data, by = c(&quot;fips&quot; = &quot;combined_fips&quot;))
+total_df</code></pre>
+<pre><code>## # A tibble: 3,141 x 74
+##     fips area_name       state_abbreviation PST045214 PST040210 PST120214
+##    &lt;int&gt; &lt;chr&gt;           &lt;chr&gt;                  &lt;int&gt;     &lt;int&gt;     &lt;dbl&gt;
+##  1  1001 Autauga County  AL                     55395     54571     1.50 
+##  2  1003 Baldwin County  AL                    200111    182265     9.80 
+##  3  1005 Barbour County  AL                     26887     27457    -2.10 
+##  4  1007 Bibb County     AL                     22506     22919    -1.80 
+##  5  1009 Blount County   AL                     57719     57322     0.700
+##  6  1011 Bullock County  AL                     10764     10915    -1.40 
+##  7  1013 Butler County   AL                     20296     20946    -3.10 
+##  8  1015 Calhoun County  AL                    115916    118586    -2.30 
+##  9  1017 Chambers County AL                     34076     34170    -0.300
+## 10  1019 Cherokee County AL                     26037     25986     0.200
+## # ... with 3,131 more rows, and 68 more variables: POP010210 &lt;int&gt;,
+## #   AGE135214 &lt;dbl&gt;, AGE295214 &lt;dbl&gt;, AGE775214 &lt;dbl&gt;, SEX255214 &lt;dbl&gt;,
+## #   RHI125214 &lt;dbl&gt;, RHI225214 &lt;dbl&gt;, RHI325214 &lt;dbl&gt;, RHI425214 &lt;dbl&gt;,
+## #   RHI525214 &lt;dbl&gt;, RHI625214 &lt;dbl&gt;, RHI725214 &lt;dbl&gt;, RHI825214 &lt;dbl&gt;,
+## #   POP715213 &lt;dbl&gt;, POP645213 &lt;dbl&gt;, POP815213 &lt;dbl&gt;, EDU635213 &lt;dbl&gt;,
+## #   EDU685213 &lt;dbl&gt;, VET605213 &lt;int&gt;, LFE305213 &lt;dbl&gt;, HSG010214 &lt;int&gt;,
+## #   HSG445213 &lt;dbl&gt;, HSG096213 &lt;dbl&gt;, HSG495213 &lt;int&gt;, HSD410213 &lt;int&gt;,
+## #   HSD310213 &lt;dbl&gt;, INC910213 &lt;int&gt;, INC110213 &lt;int&gt;, PVY020213 &lt;dbl&gt;,
+## #   BZA010213 &lt;int&gt;, BZA110213 &lt;int&gt;, BZA115213 &lt;dbl&gt;, NES010213 &lt;int&gt;,
+## #   SBO001207 &lt;int&gt;, SBO315207 &lt;dbl&gt;, SBO115207 &lt;dbl&gt;, SBO215207 &lt;dbl&gt;,
+## #   SBO515207 &lt;dbl&gt;, SBO415207 &lt;dbl&gt;, SBO015207 &lt;dbl&gt;, MAN450207 &lt;dbl&gt;,
+## #   WTN220207 &lt;dbl&gt;, RTN130207 &lt;dbl&gt;, RTN131207 &lt;int&gt;, AFN120207 &lt;int&gt;,
+## #   BPS030214 &lt;int&gt;, LND110210 &lt;dbl&gt;, POP060210 &lt;dbl&gt;, X1 &lt;int&gt;,
+## #   votes_dem_2016 &lt;dbl&gt;, votes_gop_2016 &lt;dbl&gt;, total_votes_2016 &lt;dbl&gt;,
+## #   per_dem_2016 &lt;dbl&gt;, per_gop_2016 &lt;dbl&gt;, diff_2016 &lt;int&gt;,
+## #   per_point_diff_2016 &lt;dbl&gt;, state_abbr &lt;chr&gt;, county_name &lt;chr&gt;,
+## #   FIPS &lt;chr&gt;, total_votes_2012 &lt;dbl&gt;, votes_dem_2012 &lt;dbl&gt;,
+## #   votes_gop_2012 &lt;dbl&gt;, county_fips &lt;chr&gt;, state_fips &lt;chr&gt;,
+## #   per_dem_2012 &lt;dbl&gt;, per_gop_2012 &lt;dbl&gt;, diff_2012 &lt;dbl&gt;,
+## #   per_point_diff_2012 &lt;dbl&gt;</code></pre>
 </div>
 
 

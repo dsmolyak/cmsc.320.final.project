@@ -17,13 +17,24 @@ Simultaneously, this will be a tutorial in data analysis using R. We will first 
 
 ![](./politics.jpg)
 
+# Setup
+
+Before we start, you'll want to make sure you have the proper packages installed and imported as shown below. Some common packages in R include tidyverse, dplyr, and stringr, among others.
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(dplyr)
+library(stringr)
+```
+
 # Data Collection
 
 The data used for this project can be found online at this [kaggle repository](https://www.kaggle.com/joelwilson/identity-politics-in-the-2016-election/data). At this repository, we find two csv files, one on each U.S. county's [demographic characteristics](https://www.kaggle.com/joelwilson/2012-2016-presidential-elections/downloads/county_facts.csv/2) and another on its [voting behavior](https://www.kaggle.com/joelwilson/2012-2016-presidential-elections/downloads/US_County_Level_Presidential_Results_12-16.csv/2).
 
+So the first step in collecting this data is of course to download the datasets, by clicking on the link above. Then, after placing these csv files in the same folder as your analysis, we can execute the code below, which converts csv files into useable data in R, in the form of a data frame.
+
 
 ```{r message=FALSE, warning=FALSE}
-library(tidyverse)
 path <- "./county_facts.csv"
 county_data <- read_csv(path)
 county_data
@@ -35,6 +46,56 @@ path <- "./US_County_Level_Presidential_Results_12-16.csv"
 election_data <- read_csv(path)
 election_data
 ```
+
+Now, we may explore these specific data frames in a variety of ways to get a general sense of what is contained within them. For example we might ask how many rows (counties) there are:
+
+
+```{r message=FALSE, warning=FALSE}
+nrow(county_data)
+```
+
+Or we might ask what are and how many columns (attributes) do we have:
+
+```{r message=FALSE, warning=FALSE}
+colnames(county_data)
+```
+
+And as the above column names may seem pretty archaic, we have thankfully also been provided with a dictionary that maps these names to their meanings.
+
+```{r message=FALSE, warning=FALSE}
+path <- "./county_facts_dictionary.csv"
+county_dict <- read_csv(path)
+county_dict
+```
+
+Now that we have a general understanding of what lies within our data frame, let's also introduce some methods for searching for specifics within the data. For example, we can choose to look at only certain attributes, using the "select" command.
+
+```{r message=FALSE, warning=FALSE}
+select(county_data, area_name, PST045214, SEX255214)
+```
+
+Or we can choose to look at certain rows (entities) that fit a specific description or condition. For instance, the code below returns us the row with our very own Prince George's County.
+
+```{r message=FALSE, warning=FALSE}
+filter(county_data, area_name == "Prince George's County")
+```
+
+We can even use the FIPS (Federal Information Processing Standard) code to find all of the counties recorded that are in Maryland, as we know that those every 1000 fips are for one state, and the result above indicates the Maryland FIPS are between 24000 and 25000.
+
+```{r message=FALSE, warning=FALSE}
+filter(county_data, fips >= 24000 & fips < 25000)
+```
+
+Now, to make this data useable for comparison of county demographics to county voting trends, we need to combine these two data frames. We will be doing this two-table operations, specifically by "joining" the demographics table and the voting table on their matching value for FIPS. Such operations are also frequently done in SQL, where information is separated in a database into tables. You can read more about these two table operations [here](https://www.w3schools.com/sql/sql_join.asp), but we will show our specific use-case below.
+
+```{r message=FALSE, warning=FALSE}
+total_df <- county_data %>%
+  inner_join(election_data, by = c("fips" = "combined_fips"))
+total_df
+```
+
+
+
 
 
 
