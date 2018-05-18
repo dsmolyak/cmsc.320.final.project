@@ -346,7 +346,7 @@ total_df</code></pre>
 </div>
 <div id="vizualization" class="section level1">
 <h1>Vizualization</h1>
-<p>Now that we are data is all together in one data frame, we may begin analyzing some basic trends and patterns in the data. For instance, we can plot in a histogram the number of counties in various ranges of political leanings. We will do this by using the “per_point_diff_2016” statistic, which is the percentage differential between Democratic and Republican votes in 2016. (subtracts the Republican percentage from the Democratic percentage). Thus, counties leaning Republican will be negative while those leaning Democratic will be positive. Additionally, we include a line to indicate where the median leaning is of a county in 2016.</p>
+<p>Now our data is all together in one data frame, we may begin analyzing some basic trends and patterns in the data. For instance, we can plot in a histogram the number of counties in various ranges of political leanings. We will do this by using the “per_point_diff_2016” statistic, which is the percentage differential between Democratic and Republican votes in 2016. (subtracts the Republican percentage from the Democratic percentage). Thus, counties leaning Republican will be negative while those leaning Democratic will be positive. Additionally, we include two lines to indicate where the median and mean leaning is of a county in 2016.</p>
 <p>We do this using the ggplot package, which allows to specify what type of plot we’d like (histogram), what we’d like as the x-variable (per_point_diff_2016) and the other vertical that are plotted below, using geom_vline.</p>
 <pre class="r"><code>total_df %&gt;%
   ggplot(aes(x=per_point_diff_2016)) +
@@ -401,6 +401,85 @@ broom::tidy(education_model)</code></pre>
 <p>This model now gives us information on two fronts. Firstly, the estimate for “total_df$EDU685213” gives us an understanding of what exactly the relation is between education and differential. Because the model states an estimate of approximately 0.016, we can interpret this to mean that for every 1% increase in education level in any given county, we can expect a 0.016 (1.6%) increase in the differential between Democratic and Republican votes. Additionally, the intercept tells us that for a county with 0% of its residents with bachelor’s degrees, the expected differential in that county would be approximately -0.635, or a strong Republican leaning.</p>
 <p>Moreover, if we look at the p-value for both the intercept and the relationship, they are both nearly 0. Thus, as the p-value is certainly below the standard threshold of 0.05, with strong confidence, we can reject our null-hypothesis of no trend between education and political leaning.</p>
 <p>The insight: while this regression provides no indication whatsoever of how well-informed policies on either side of the aisle are, it certainly appears that Republicans do a better job of appealing to voters of lower education levels and Democrats to voters of higher education levels. To read more on this trend you can visit this <a href="http://www.pewresearch.org/fact-tank/2016/09/15/educational-divide-in-vote-preferences-on-track-to-be-wider-than-in-recent-elections/">Pew Research article</a>.</p>
+</div>
+<div id="machine-learning" class="section level1">
+<h1>Machine Learning</h1>
+<p>Last but not least, we will use machine learning to make a model that incorporates several of these county characteristics that are likely to factor into the outcome of an election. We will stick to four main indicators: 1. Percent of people with a Bachelor’s degree (EDU685213): As we previously showed in our hypothesis testing, there is a clear link between higher levels of education and increased Democratic lean 2. Percent of people that are White (RHI125214): While this is more speculation at this point, it is commonly known that minorities tend to vote Democratic while White’s tend to vote Republican, we believe this will be an important indicator 3. Median Household Income (INC110213): Once again, median income, especially in the 2016 election was generally thought to be correlated with greater Democratic lean. 4. Population per square mile, aka population density (POP060210): With this metric, we hope to target cities versus rural areas, where cities generally lean Republican.</p>
+<p>Now we shall start by converting election lean into a factor (D or R).</p>
+<pre class="r"><code>outcome_df &lt;- total_df %&gt;%
+  mutate(result = ifelse(per_point_diff_2016 &gt; 0, 'D', 'R')) %&gt;%
+  select(fips, result)
+outcome_df</code></pre>
+<pre><code>## # A tibble: 3,141 x 2
+##     fips result
+##    &lt;int&gt; &lt;chr&gt; 
+##  1  1001 R     
+##  2  1003 R     
+##  3  1005 R     
+##  4  1007 R     
+##  5  1009 R     
+##  6  1011 D     
+##  7  1013 R     
+##  8  1015 R     
+##  9  1017 R     
+## 10  1019 R     
+## # ... with 3,131 more rows</code></pre>
+<p>And then we select these four indicators, along with the outcome (which we convert to a factor).</p>
+<pre class="r"><code>final_df &lt;- total_df %&gt;%
+  mutate(result = ifelse(per_point_diff_2016 &gt; 0, 'D', 'R')) %&gt;%
+  mutate(result=factor(result, levels=c(&quot;D&quot;, &quot;R&quot;))) %&gt;%
+  select(EDU685213, RHI125214, INC110213, POP060210, fips, result)
+
+final_df</code></pre>
+<pre><code>## # A tibble: 3,141 x 6
+##    EDU685213 RHI125214 INC110213 POP060210  fips result
+##        &lt;dbl&gt;     &lt;dbl&gt;     &lt;int&gt;     &lt;dbl&gt; &lt;int&gt; &lt;fct&gt; 
+##  1      20.9      77.9     53682      91.8  1001 R     
+##  2      27.7      87.1     50221     115    1003 R     
+##  3      13.4      50.2     32911      31.0  1005 R     
+##  4      12.1      76.3     36447      36.8  1007 R     
+##  5      12.1      96.0     44145      88.9  1009 R     
+##  6      12.5      26.9     32033      17.5  1011 D     
+##  7      14.0      53.9     29918      27.0  1013 R     
+##  8      16.1      75.8     39962     196    1015 R     
+##  9      11.8      58.3     32402      57.4  1017 R     
+## 10      12.8      93.0     34907      46.9  1019 R     
+## # ... with 3,131 more rows</code></pre>
+<p>Now, we partition this data into training and testing sets: we use the training set to train our model and then evaluate the performance of our model on the testing set.</p>
+<pre class="r"><code>set.seed(1234)
+test_random_forest_df &lt;- final_df %&gt;%
+  group_by(result) %&gt;%
+  sample_frac(.2) %&gt;%
+  ungroup()
+
+train_random_forest_df &lt;- final_df %&gt;%
+  anti_join(test_random_forest_df, by=&quot;fips&quot;)</code></pre>
+<p>Now that we’ve partitioned our data, we will train a random forest (more information about these <a href="https://en.wikipedia.org/wiki/Random_forest">here</a>) on our training set.</p>
+<pre class="r"><code>library(randomForest)
+rf &lt;- randomForest(result~., data=train_random_forest_df %&gt;% select(-fips))
+rf</code></pre>
+<pre><code>## 
+## Call:
+##  randomForest(formula = result ~ ., data = train_random_forest_df %&gt;%      select(-fips)) 
+##                Type of random forest: classification
+##                      Number of trees: 500
+## No. of variables tried at each split: 2
+## 
+##         OOB estimate of  error rate: 8.8%
+## Confusion matrix:
+##     D    R class.error
+## D 238  152  0.38974359
+## R  69 2053  0.03251649</code></pre>
+<p>Already we see that while this model does a good job of identifying Republican counties (as most counties are Republican), it often struggles with classifying Democratic counties, having a 40% error rate of that type. However, overall the model is estimated to have an 8.8% error rate, which is a decent start. Now let’s see how well we do on our training data:</p>
+<pre class="r"><code>test_predictions &lt;- predict(rf, newdata=test_random_forest_df %&gt;% select(-fips))
+table(pred=test_predictions, observed=test_random_forest_df$result)</code></pre>
+<pre><code>##     observed
+## pred   D   R
+##    D  70  15
+##    R  28 516</code></pre>
+<p>Thus, in this particular test, we observe an error rate of (15 + 28)/(15 + 28 + 70 + 516) = .0684 or 6.84%. While this certainly isn’t perfect, this shows that our four chosen indicators do a decent job, and certainly better than random job, of predicting the outcome of an election in any given county. There is of course much opportunity for improvement here, such as using different models, making transformations of the data, or using different indicators.</p>
+<p>However, the main point is that with R and its various libraries, and with a proper dataset at hand, we can make great leaps in bounds in understanding the world around us more concretely. In particular here, we went beyond the individual stories of Hillary Clinton and Donald Trump, or of the mythical swing voter, and looked at specific trends within our electorate in the 2016 election. And with these data science tools, we can confirm or deny various reports or stories that we might see, making us better consumers of news and information.</p>
+<p>Hope you enjoyed! And here are some of the resources on the packages we used: <a href="https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html">Dplyr</a> <a href="https://www.tidyverse.org/">Tidyverse</a> <a href="https://cran.r-project.org/web/packages/randomForest/randomForest.pdf">Randomforest</a></p>
 </div>
 
 
