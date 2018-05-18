@@ -179,9 +179,13 @@ The insight: while this regression provides no indication whatsoever of how well
 # Machine Learning
 
 Last but not least, we will use machine learning to make a model that incorporates several of these county characteristics that are likely to factor into the outcome of an election. We will stick to four main indicators:
+
 1. Percent of people with a Bachelor's degree (EDU685213): As we previously showed in our hypothesis testing, there is a clear link between higher levels of education and increased Democratic lean
+
 2. Percent of people that are White (RHI125214): While this is more speculation at this point, it is commonly known that minorities tend to vote Democratic while White's tend to vote Republican, we believe this will be an important indicator
+
 3. Median Household Income (INC110213): Once again, median income, especially in the 2016 election was generally thought to be correlated with greater Democratic lean.
+
 4. Population per square mile, aka population density (POP060210): With this metric, we hope to target cities versus rural areas, where cities generally lean Republican.
 
 Now we shall start by converting election lean into a factor (D or R).
@@ -237,8 +241,11 @@ Thus, in this particular test, we observe an error rate of (15 + 28)/(15 + 28 + 
 However, the main point is that with R and its various libraries, and with a proper dataset at hand, we can make great leaps in bounds in understanding the world around us more concretely. In particular here, we went beyond the individual stories of Hillary Clinton and Donald Trump, or of the mythical swing voter, and looked at specific trends within our electorate in the 2016 election. And with these data science tools, we can confirm or deny various reports or stories that we might see, making us better consumers of news and information.
 
 Hope you enjoyed! And here are some of the resources on the packages we used:
+
 [Dplyr](https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html)
+
 [Tidyverse](https://www.tidyverse.org/)
+
 [Randomforest](https://cran.r-project.org/web/packages/randomForest/randomForest.pdf)
 
 
